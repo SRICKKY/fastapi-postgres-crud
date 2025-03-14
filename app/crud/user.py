@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models import User
-from app.schemas import UserCreate
+from app.schemas import UserCreate, UserUpdate
 from app.utils.security import hash_password
 
 
@@ -27,3 +27,31 @@ def get_user_by_email(db: Session, email: str):
 
 def get_user_by_id(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
+
+
+def update_user(db: Session, user_id: int, user_update: UserUpdate):
+    db_user = get_user_by_id(db, user_id)
+    if not db_user:
+        return None
+
+    update_data = user_update.dict(exclude_unset=True)  # Only include set fields
+    if user_update.password:
+        update_data["password_hash"] = hash_password(user_update.password)
+    elif "password" in update_data:
+        del update_data["password"]  # Remove password if not hashed
+
+    for key, value in update_data.items():
+        setattr(db_user, key, value if key != "password_hash" else value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+def delete_user(db: Session, user_id: int):
+    db_user = get_user_by_id(db, user_id)
+    if not db_user:
+        return None
+    db.delete(db_user)
+    db.commit()
+    return {"message": f"User {user_id} deleted successfully"}

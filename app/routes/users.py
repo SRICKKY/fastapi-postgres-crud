@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.schemas import UserCreate, UserResponse, UserLogin
+from app.schemas import UserCreate, UserResponse, UserLogin, UserUpdate
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.crud.user import (
     get_user_by_email,
     get_user_by_id,
     get_user_by_username,
-    create_user
+    create_user,
+    update_user,
+    delete_user
 )
 from app.utils.security import (
     verify_password,
@@ -14,7 +16,7 @@ from app.utils.security import (
 )
 
 
-user_router = r = APIRouter()
+user_router = r = APIRouter(tags=["Users"])
 
 @user_router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -46,3 +48,21 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+@user_router.put("/users/{user_id}", response_model=UserResponse)
+def update_user_endpoint(
+    user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)
+):
+    db_user = update_user(db, user_id, user_update)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
+
+@user_router.delete("/users/{user_id}")
+def delete_user_endpoint(user_id: int, db: Session = Depends(get_db)):
+    result = delete_user(db, user_id)
+    if result is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return result
