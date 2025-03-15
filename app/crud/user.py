@@ -55,3 +55,9 @@ def delete_user(db: Session, user_id: int):
     db.delete(db_user)
     db.commit()
     return {"message": f"User {user_id} deleted successfully"}
+
+def get_all_users(db: Session, page: int = 1, per_page: int = 10):
+    offset = (page - 1) * per_page
+    users = db.query(User).offset(offset).limit(per_page).all()
+    total = db.query(User).count()
+    return users, total

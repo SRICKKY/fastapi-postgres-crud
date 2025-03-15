@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from app.schemas import UserCreate, UserResponse, UserLogin, UserUpdate
+from app.schemas import UserCreate, UserResponse, UserLogin, UserUpdate, PaginatedUserResponse
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.crud.user import (
@@ -8,7 +8,8 @@ from app.crud.user import (
     get_user_by_username,
     create_user,
     update_user,
-    delete_user
+    delete_user,
+    get_all_users
 )
 from app.utils.security import (
     verify_password,
@@ -66,3 +67,19 @@ def delete_user_endpoint(user_id: int, db: Session = Depends(get_db)):
     if result is None:
         raise HTTPException(status_code=404, detail="User not found")
     return result
+
+@user_router.get("/users", response_model=PaginatedUserResponse)
+def get_all_users_endpoint(db: Session = Depends(get_db), page: int = 1, per_page: int = 10):
+    if page < 1 or per_page < 1:
+        raise HTTPException(status_code=400, detail="Page and per_page must be positive integers")
+    
+    users, total = get_all_users(db, page, per_page)
+    total_pages = (total + per_page - 1) // per_page
+    
+    return PaginatedUserResponse(
+        users=users,
+        total=total,
+        page=page,
+        per_page=per_page,
+        total_pages=total_pages
+    )
