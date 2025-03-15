@@ -11,6 +11,7 @@ origins = [
     "http://localhost:5173",
     "https://*.vercel.app",
     "https://*.surge.sh",
+    "https://*.netlify.app/login"
 ]
 
 app.add_middleware(
