@@ -9,7 +9,8 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:5173",
-    "https://*.vercel.app"
+    "https://*.vercel.app",
+    "https://*.surge.sh",
 ]
 
 app.add_middleware(
